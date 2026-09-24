@@ -16,10 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.11.9
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.9"
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -30,28 +30,33 @@ jobs:
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake libltdl-dev
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip \
+            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+            libncursesw5-dev cmake libffi-dev libssl-dev automake autopoint gettext
 
-      - name: Install Buildozer
+      - name: Install Buildozer toolchain
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "buildozer==1.6.0" "cython<3.0"
+          python -m pip install "buildozer==1.6.0" "cython==0.29.34" "setuptools<81"
 
-      - name: Verify project
+      - name: Verify project and Android pins
         run: |
           test -f buildozer.spec
           test -f Archery_Coach_TSV_Holm_PRO_FINAL116_MOBILE.py
           python -m py_compile Archery_Coach_TSV_Holm_PRO_FINAL116_MOBILE.py
-          grep -nE "android.minapi|android.ndk_api|android.ndk|p4a.python_version|android.accept_sdk_license" buildozer.spec
+          echo '--- buildozer.spec ---'
+          cat buildozer.spec
+          echo '--- Python/Kivy pins ---'
+          grep -nE "requirements|p4a.python_version|android.api|android.minapi|android.ndk|android.ndk_api|android.archs" buildozer.spec
+
+      - name: Clean previous build state
+        run: rm -rf .buildozer bin
 
       - name: Build APK
-        run: |
-          rm -rf .buildozer bin
-          buildozer android debug
+        run: buildozer -v android debug
 
       - name: List APK
-        run: |
-          ls -lah bin/
+        run: ls -lah bin/
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
