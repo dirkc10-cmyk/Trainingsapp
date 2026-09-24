@@ -37,18 +37,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "buildozer==1.6.0" "cython<3.0"
 
-      - name: Verify Buildozer configuration
+      - name: Verify project
         run: |
-          grep -n "android.accept_sdk_license" buildozer.spec
+          test -f buildozer.spec
           test -f Archery_Coach_TSV_Holm_PRO_FINAL116_MOBILE.py
           python -m py_compile Archery_Coach_TSV_Holm_PRO_FINAL116_MOBILE.py
-
-      - name: Bootstrap Android SDK, NDK and python-for-android
-        run: |
-          buildozer android p4a -- --help
+          grep -nE "android.minapi|android.ndk_api|android.ndk|p4a.python_version|android.accept_sdk_license" buildozer.spec
 
       - name: Build APK
         run: |
+          rm -rf .buildozer bin
           buildozer android debug
 
       - name: List APK
